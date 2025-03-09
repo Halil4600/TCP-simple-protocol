@@ -5,19 +5,12 @@ namespace TCP_simple_protocol
 {
     public class Program
     {
-        static void Main(string[] args)
+        public static void Main()
         {
-            Console.WriteLine("TCP Server");
-
-            int port = 7;
-            TcpListener listener = new TcpListener(IPAddress.Any, port);
-            listener.Start();
-            while (true)
-            {
-                TcpClient client = listener.AcceptTcpClient();
-                Task.Run(() => ClientHandler.HandleClient(client));
-            }
-            listener.Stop();
+            Task.Run(() => new TcpServer().TcpServerStart());
+            Task.Run(() => new TcpServerJson().JsonTcpServerStart());
+            Console.WriteLine("Servers are running. Press ENTER to exit.");
+            Console.ReadLine();
         }
     }
 }

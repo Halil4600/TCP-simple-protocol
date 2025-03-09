@@ -6,75 +6,69 @@ namespace TCP_simple_protocol
 {
     public class ClientHandler
     {
-        public static void HandleClient(TcpClient client)
+        public static void HandleClient(TcpClient socket)
         {
-            using NetworkStream stream = client.GetStream();
-            using StreamReader reader = new StreamReader(stream);
-            using StreamWriter writer = new StreamWriter(stream) { AutoFlush = true };
+            Console.WriteLine(socket.Client.RemoteEndPoint);
+            using NetworkStream ns = socket.GetStream();
+            using StreamReader reader = new StreamReader(ns);
+            using StreamWriter writer = new StreamWriter(ns) { AutoFlush = true };
 
-            try
+            bool isRunning = true;
+            while (isRunning)
             {
-                // Trin 1: Modtag kommando fra klienten (Random, Add, Subtract)
-                string? message = reader.ReadLine();
-                Console.WriteLine($"Received command: {message}");
+                string message = reader.ReadLine();
 
-                if (message == null)
+                switch (message)
                 {
-                    return;
+                    case "Random":
+                        writer.WriteLine("Input numbers");
+                        writer.Flush();
+                        writer.WriteLine(RNum(reader.ReadLine()));
+                        writer.Flush();
+                        break;
+                    case "Add":
+                        writer.WriteLine("Input numbers");
+                        writer.Flush();
+                        writer.WriteLine(ANum(reader.ReadLine()));
+                        writer.Flush();
+                        break;
+                    case "Subtract":
+                        writer.WriteLine("Input numbers");
+                        writer.Flush();
+                        writer.WriteLine(SNum(reader.ReadLine()));
+                        writer.Flush();
+                        break;
+                    case "close":
+                        writer.WriteLine("connection closed");
+                        writer.Flush();
+                        isRunning = false;
+                        break;
                 }
-
-                // Trin 2: Send besked til klienten for at anmode om tal
-                writer.WriteLine("2: Input numbers");
-
-                // Trin 3: Modtag de to tal fra klienten
-                string? numbers = reader.ReadLine();
-                if (numbers == null)
-                {
-                    return;
-                }
-
-                Console.WriteLine($"Received numbers: {numbers}");
-                string[] parts = numbers.Split(' ');
-
-                if (parts.Length != 2 || !int.TryParse(parts[0], out int num1) || !int.TryParse(parts[1], out int num2))
-                {
-                    writer.WriteLine("Error: Invalid input");
-                    return;
-                }
-
-                int result = 0;
-
-                if (message == "Random")
-                {
-                    // Trin 4: Generer et tilfældigt tal i intervallet
-                    Random rnd = new Random();
-                    result = rnd.Next(num1, num2 + 1);
-                }
-                else if (message == "Add")
-                {
-                    // Trin 4: Beregn summen af de to tal
-                    result = num1 + num2;
-                }
-                else if (message == "Subtract")
-                {
-                    // Trin 4: Beregn differensen (tal1 - tal2, rækkefølge er vigtig)
-                    result = num1 - num2;
-                }
-                else
-                {
-                    writer.WriteLine("Error: Unknown command");
-                    return;
-                }
-
-                // Trin 4: Send resultatet tilbage til klienten
-                writer.WriteLine($"4: {result}");
-                Console.WriteLine($"Sent result: {result}");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }  
-                client.Close(); // Luk forbindelsen til klienten           
+        }
+
+        public static int RNum(string message)
+        {
+            string[] numbers = message.Split(' ');
+            if (numbers.Length != 2 || !int.TryParse(numbers[0], out int min) || !int.TryParse(numbers[1], out int max)) return -1;
+            if (min > max) (min, max) = (max, min);
+            return new Random().Next(min, max + 1);
+        }
+
+        public static int ANum(string message)
+        {
+            string[] numbers = message.Split(' ');
+            int result = 0;
+            foreach (string number in numbers) result += int.Parse(number);
+            return result;
+        }
+
+        public static int SNum(string message)
+        {
+            string[] numbers = message.Split(' ');
+            int result = int.Parse(numbers[0]);
+            for (int i = 1; i < numbers.Length; i++) result -= int.Parse(numbers[i]);
+            return result;
         }
     }
 }
